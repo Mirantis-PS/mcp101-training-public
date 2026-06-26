@@ -20,8 +20,8 @@ A simple MCP server demonstrating the Model Context Protocol with real weather d
 
 ```bash
 cd mcp-demo
-python3 -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+python3 -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
@@ -77,7 +77,7 @@ Edit the config file (use your actual absolute path):
 {
   "mcpServers": {
     "weather": {
-      "command": "python",
+      "command": "/absolute/path/to/mcp-demo/.venv/bin/python",
       "args": ["/absolute/path/to/mcp-demo/weather_server.py"],
       "env": {
         "OPENWEATHER_API_KEY": "${OPENWEATHER_API_KEY}"
@@ -89,7 +89,8 @@ Edit the config file (use your actual absolute path):
 
 **Note**:
 
-- Replace the path with your actual path. Find it with: `pwd` (in the mcp-demo directory)
+- Use the `.venv` Python so the `mcp`/`httpx` dependencies resolve (on macOS/Windows: `.venv\Scripts\python.exe`)
+- Replace the paths with your actual path. Find it with: `pwd` (in the mcp-demo directory)
 - The API key is read from your system environment (set in step 3)
 - This keeps credentials out of config files (safe to share/commit)
 
@@ -107,20 +108,32 @@ Look for the 🔌 icon in Claude Desktop, then try:
 
 ## Using with Claude Code
 
-Edit `~/.config/claude-code/config.json` (or Windows equivalent):
+This project already ships a `.mcp.json` in the `mcp-demo` directory, so Claude Code
+picks up the server automatically when you run it from here:
 
 ```json
 {
   "mcpServers": {
     "weather": {
-      "command": "python",
-      "args": ["/absolute/path/to/mcp-demo/weather_server.py"]
+      "command": "./.venv/bin/python",
+      "args": ["./weather_server.py"],
+      "env": {
+        "OPENWEATHER_API_KEY": "${OPENWEATHER_API_KEY}"
+      }
     }
   }
 }
 ```
 
-The API key will be read from your system environment (recommended for security).
+Alternatively, add it explicitly with the CLI:
+
+```bash
+claude mcp add weather ./.venv/bin/python ./weather_server.py
+```
+
+The API key is read from your system environment (recommended for security), so
+make sure `OPENWEATHER_API_KEY` is exported (see step 3 above). Run `claude` from
+the `mcp-demo` directory, then `/mcp` to confirm the `weather` server is connected.
 
 ## Demo with MCP Inspector
 
@@ -130,8 +143,8 @@ The MCP Inspector is a developer tool that lets you interact with MCP servers di
 
 ```bash
 cd mcp-demo
-source venv/bin/activate
-npx @modelcontextprotocol/inspector ./venv/bin/python weather_server.py
+source .venv/bin/activate
+npx @modelcontextprotocol/inspector ./.venv/bin/python weather_server.py
 ```
 
 This starts:
@@ -157,10 +170,12 @@ When a client connects, the server announces its capabilities:
   },
   "serverInfo": {
     "name": "weather-server",
-    "version": "1.23.3"
+    "version": "1.28.0"
   }
 }
 ```
+
+> The `version` mirrors the installed `mcp` SDK version, so it will vary depending on what `pip` resolved from `requirements.txt`.
 
 #### 2. Listing Tools
 
